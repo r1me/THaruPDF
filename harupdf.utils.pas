@@ -1,0 +1,253 @@
+unit harupdf.utils;
+
+{ MIT License
+
+ Copyright (c) 2017 THaruPDF, Damian Woroch, http://r1me.pl
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE. }
+
+{$IFDEF FPC}{$mode objfpc}{$H+}{$ENDIF}
+
+interface
+uses
+{$IFNDEF FPC}
+  System.Types, System.DateUtils,
+{$ELSE}
+  Types, Dateutils,
+{$ENDIF}
+  hpdf_consts,
+  hpdf_error,
+  hpdf_types,
+  hpdf;
+
+{$IFDEF FPC}
+type
+  PUTF8Char = PAnsiChar;
+{$ENDIF}
+
+function PUTF8CharToString(AUTF8Char: PUTF8Char): String;
+function StringToPUTF8Char(AString: String; ADefaultReturnVal: Pointer = nil): PUTF8Char; inline;
+function BooleanToHaruBool(AValue: Boolean): HPDF_BOOL;
+function RectFToHaruRect(ARect: TRectF): THPDF_Rect;
+{$IFDEF FPC}function RectF(Left, Top, Right, Bottom: Single): TRectF;{$ENDIF}
+function PointFToHaruPoint(APoint: TPointF): THPDF_Point;
+function DateTimeToHPDFDate(ADateTime: TDateTime): THPDF_Date;
+function HaruErrorToString(AErrorCode: HPDF_Status): String;
+
+implementation
+uses
+{$IFNDEF FPC}
+  System.Classes,
+  System.SysUtils
+{$ELSE}
+  Classes,
+  SysUtils
+{$ENDIF}
+  ;
+
+function PUTF8CharToString(AUTF8Char: PUTF8Char): String;
+var
+  utfString: UTF8String;
+begin
+  Result := '';
+  if Assigned(AUTF8Char) then
+  begin
+    SetString(utfString, AUTF8Char, Length(AUTF8Char));
+    Result := String(utfString);
+  end;
+end;
+
+function StringToPUTF8Char(AString: String; ADefaultReturnVal: Pointer): PUTF8Char; inline;
+begin
+  Result := ADefaultReturnVal;
+
+  if (AString <> '') then
+    Result := PUTF8Char(UTF8Encode(AString));
+end;
+
+function BooleanToHaruBool(AValue: Boolean): HPDF_BOOL;
+begin
+  if AValue then
+    Result := HPDF_TRUE
+  else
+    Result := HPDF_FALSE;
+end;
+
+function RectFToHaruRect(ARect: TRectF): THPDF_Rect;
+begin
+  Result.left := ARect.Left;
+  Result.bottom := ARect.Bottom;
+  Result.right := ARect.Right;
+  Result.top := ARect.Top;
+end;
+
+{$IFDEF FPC}
+function RectF(Left, Top, Right, Bottom: Single): TRectF;
+begin
+  RectF.Left := Left;
+  RectF.Top := Top;
+  RectF.Right := Right;
+  RectF.Bottom := Bottom;
+end;
+{$ENDIF}
+
+function PointFToHaruPoint(APoint: TPointF): THPDF_Point;
+begin
+  Result.x := APoint.X;
+  Result.y := APoint.Y;
+end;
+
+function DateTimeToHPDFDate(ADateTime: TDateTime): THPDF_Date;
+var
+  year, month, day, hour, minute, second, ms: Word;
+begin
+  DecodeDateTime(ADateTime, year, month, day, hour, minute, second, ms);
+  Result.year := year;
+  Result.month := month;
+  Result.day := day;
+  Result.hour := hour;
+  Result.minutes := minute;
+  Result.seconds := second;
+  Result.ind := ' ';
+  Result.off_hour := 0;
+  Result.off_minutes := 0;
+end;
+
+function HaruErrorToString(AErrorCode: HPDF_Status): String;
+begin
+  case AErrorCode of
+    HPDF_ARRAY_COUNT_ERR: Result := 'HPDF_ARRAY_COUNT_ERR';
+    HPDF_ARRAY_ITEM_NOT_FOUND: Result := 'HPDF_ARRAY_ITEM_NOT_FOUND';
+    HPDF_ARRAY_ITEM_UNEXPECTED_TYPE: Result := 'HPDF_ARRAY_ITEM_UNEXPECTED_TYPE';
+    HPDF_BINARY_LENGTH_ERR: Result := 'HPDF_BINARY_LENGTH_ERR';
+    HPDF_CANNOT_GET_PALLET: Result := 'HPDF_CANNOT_GET_PALLET';
+    HPDF_DICT_COUNT_ERR: Result := 'HPDF_DICT_COUNT_ERR';
+    HPDF_DICT_ITEM_NOT_FOUND: Result := 'HPDF_DICT_ITEM_NOT_FOUND';
+    HPDF_DICT_ITEM_UNEXPECTED_TYPE: Result := 'HPDF_DICT_ITEM_UNEXPECTED_TYPE';
+    HPDF_DICT_STREAM_LENGTH_NOT_FOUND: Result := 'HPDF_DICT_STREAM_LENGTH_NOT_FOUND';
+    HPDF_DOC_ENCRYPTDICT_NOT_FOUND: Result := 'HPDF_DOC_ENCRYPTDICT_NOT_FOUND';
+    HPDF_DOC_INVALID_OBJECT: Result := 'HPDF_DOC_INVALID_OBJECT';
+    HPDF_DUPLICATE_REGISTRATION: Result := 'HPDF_DUPLICATE_REGISTRATION';
+    HPDF_ENCRYPT_INVALID_PASSWORD: Result := 'HPDF_ENCRYPT_INVALID_PASSWORD';
+    HPDF_ERR_UNKNOWN_CLASS: Result := 'HPDF_ERR_UNKNOWN_CLASS';
+    HPDF_EXCEED_GSTATE_LIMIT: Result := 'HPDF_EXCEED_GSTATE_LIMIT';
+    HPDF_FAILD_TO_ALLOC_MEM: Result := 'HPDF_FAILD_TO_ALLOC_MEM';
+    HPDF_FILE_IO_ERROR: Result := 'HPDF_FILE_IO_ERROR';
+    HPDF_FILE_OPEN_ERROR: Result := 'HPDF_FILE_OPEN_ERROR';
+    HPDF_FONT_EXISTS: Result := 'HPDF_FONT_EXISTS';
+    HPDF_FONT_INVALID_WIDTHS_TABLE: Result := 'HPDF_FONT_INVALID_WIDTHS_TABLE';
+    HPDF_INVALID_AFM_HEADER: Result := 'HPDF_INVALID_AFM_HEADER';
+    HPDF_INVALID_ANNOTATION: Result := 'HPDF_INVALID_ANNOTATION';
+    HPDF_INVALID_BIT_PER_COMPONENT: Result := 'HPDF_INVALID_BIT_PER_COMPONENT';
+    HPDF_INVALID_CHAR_MATRICS_DATA: Result := 'HPDF_INVALID_CHAR_MATRICS_DATA';
+    HPDF_INVALID_COLOR_SPACE: Result := 'HPDF_INVALID_COLOR_SPACE';
+    HPDF_INVALID_COMPRESSION_MODE: Result := 'HPDF_INVALID_COMPRESSION_MODE';
+    HPDF_INVALID_DATE_TIME: Result := 'HPDF_INVALID_DATE_TIME';
+    HPDF_INVALID_DESTINATION: Result := 'HPDF_INVALID_DESTINATION';
+    HPDF_INVALID_DOCUMENT: Result := 'HPDF_INVALID_DOCUMENT';
+    HPDF_INVALID_DOCUMENT_STATE: Result := 'HPDF_INVALID_DOCUMENT_STATE';
+    HPDF_INVALID_ENCODER: Result := 'HPDF_INVALID_ENCODER';
+    HPDF_INVALID_ENCODER_TYPE: Result := 'HPDF_INVALID_ENCODER_TYPE';
+    HPDF_INVALID_ENCODING_NAME: Result := 'HPDF_INVALID_ENCODING_NAME';
+    HPDF_INVALID_ENCRYPT_KEY_LEN: Result := 'HPDF_INVALID_ENCRYPT_KEY_LEN';
+    HPDF_INVALID_FONTDEF_DATA: Result := 'HPDF_INVALID_FONTDEF_DATA';
+    HPDF_INVALID_FONTDEF_TYPE: Result := 'HPDF_INVALID_FONTDEF_TYPE';
+    HPDF_INVALID_FONT_NAME: Result := 'HPDF_INVALID_FONT_NAME';
+    HPDF_INVALID_IMAGE: Result := 'HPDF_INVALID_IMAGE';
+    HPDF_INVALID_JPEG_DATA: Result := 'HPDF_INVALID_JPEG_DATA';
+    HPDF_INVALID_N_DATA: Result := 'HPDF_INVALID_N_DATA';
+    HPDF_INVALID_OBJECT: Result := 'HPDF_INVALID_OBJECT';
+    HPDF_INVALID_OBJ_ID: Result := 'HPDF_INVALID_OBJ_ID';
+    HPDF_INVALID_OPERATION: Result := 'HPDF_INVALID_OPERATION';
+    HPDF_INVALID_OUTLINE: Result := 'HPDF_INVALID_OUTLINE';
+    HPDF_INVALID_PAGE: Result := 'HPDF_INVALID_PAGE';
+    HPDF_INVALID_PAGES: Result := 'HPDF_INVALID_PAGES';
+    HPDF_INVALID_PARAMETER: Result := 'HPDF_INVALID_PARAMETER';
+    HPDF_INVALID_PNG_IMAGE: Result := 'HPDF_INVALID_PNG_IMAGE';
+    HPDF_INVALID_STREAM: Result := 'HPDF_INVALID_STREAM';
+    HPDF_MISSING_FILE_NAME_ENTRY: Result := 'HPDF_MISSING_FILE_NAME_ENTRY';
+    HPDF_INVALID_TTC_FILE: Result := 'HPDF_INVALID_TTC_FILE';
+    HPDF_INVALID_TTC_INDEX: Result := 'HPDF_INVALID_TTC_INDEX';
+    HPDF_INVALID_WX_DATA: Result := 'HPDF_INVALID_WX_DATA';
+    HPDF_ITEM_NOT_FOUND: Result := 'HPDF_ITEM_NOT_FOUND';
+    HPDF_LIBPNG_ERROR: Result := 'HPDF_LIBPNG_ERROR';
+    HPDF_NAME_INVALID_VALUE: Result := 'HPDF_NAME_INVALID_VALUE';
+    HPDF_NAME_OUT_OF_RANGE: Result := 'HPDF_NAME_OUT_OF_RANGE';
+    HPDF_PAGE_INVALID_PARAM_COUNT: Result := 'HPDF_PAGE_INVALID_PARAM_COUNT';
+    HPDF_PAGES_MISSING_KIDS_ENTRY: Result := 'HPDF_PAGES_MISSING_KIDS_ENTRY';
+    HPDF_PAGE_CANNOT_FIND_OBJECT: Result := 'HPDF_PAGE_CANNOT_FIND_OBJECT';
+    HPDF_PAGE_CANNOT_GET_ROOT_PAGES: Result := 'HPDF_PAGE_CANNOT_GET_ROOT_PAGES';
+    HPDF_PAGE_CANNOT_RESTORE_GSTATE: Result := 'HPDF_PAGE_CANNOT_RESTORE_GSTATE';
+    HPDF_PAGE_CANNOT_SET_PARENT: Result := 'HPDF_PAGE_CANNOT_SET_PARENT';
+    HPDF_PAGE_FONT_NOT_FOUND: Result := 'HPDF_PAGE_FONT_NOT_FOUND';
+    HPDF_PAGE_INVALID_FONT: Result := 'HPDF_PAGE_INVALID_FONT';
+    HPDF_PAGE_INVALID_FONT_SIZE: Result := 'HPDF_PAGE_INVALID_FONT_SIZE';
+    HPDF_PAGE_INVALID_GMODE: Result := 'HPDF_PAGE_INVALID_GMODE';
+    HPDF_PAGE_INVALID_INDEX: Result := 'HPDF_PAGE_INVALID_INDEX';
+    HPDF_PAGE_INVALID_ROTATE_VALUE: Result := 'HPDF_PAGE_INVALID_ROTATE_VALUE';
+    HPDF_PAGE_INVALID_SIZE: Result := 'HPDF_PAGE_INVALID_SIZE';
+    HPDF_PAGE_INVALID_XOBJECT: Result := 'HPDF_PAGE_INVALID_XOBJECT';
+    HPDF_PAGE_OUT_OF_RANGE: Result := 'HPDF_PAGE_OUT_OF_RANGE';
+    HPDF_REAL_OUT_OF_RANGE: Result := 'HPDF_REAL_OUT_OF_RANGE';
+    HPDF_STREAM_EOF: Result := 'HPDF_STREAM_EOF';
+    HPDF_STREAM_READLN_CONTINUE: Result := 'HPDF_STREAM_READLN_CONTINUE';
+    HPDF_STRING_OUT_OF_RANGE: Result := 'HPDF_STRING_OUT_OF_RANGE';
+    HPDF_THIS_FUNC_WAS_SKIPPED: Result := 'HPDF_THIS_FUNC_WAS_SKIPPED';
+    HPDF_TTF_CANNOT_EMBEDDING_FONT: Result := 'HPDF_TTF_CANNOT_EMBEDDING_FONT';
+    HPDF_TTF_INVALID_CMAP: Result := 'HPDF_TTF_INVALID_CMAP';
+    HPDF_TTF_INVALID_FOMAT: Result := 'HPDF_TTF_INVALID_FOMAT';
+    HPDF_TTF_MISSING_TABLE: Result := 'HPDF_TTF_MISSING_TABLE';
+    HPDF_UNSUPPORTED_FONT_TYPE: Result := 'HPDF_UNSUPPORTED_FONT_TYPE';
+    HPDF_UNSUPPORTED_FUNC: Result := 'HPDF_UNSUPPORTED_FUNC';
+    HPDF_UNSUPPORTED_JPEG_FORMAT: Result := 'HPDF_UNSUPPORTED_JPEG_FORMAT';
+    HPDF_UNSUPPORTED_TYPE1_FONT: Result := 'HPDF_UNSUPPORTED_TYPE1_FONT';
+    HPDF_XREF_COUNT_ERR: Result := 'HPDF_XREF_COUNT_ERR';
+    HPDF_ZLIB_ERROR: Result := 'HPDF_ZLIB_ERROR';
+    HPDF_INVALID_PAGE_INDEX: Result := 'HPDF_INVALID_PAGE_INDEX';
+    HPDF_INVALID_URI: Result := 'HPDF_INVALID_URI';
+    HPDF_PAGE_LAYOUT_OUT_OF_RANGE: Result := 'HPDF_PAGE_LAYOUT_OUT_OF_RANGE';
+    HPDF_PAGE_MODE_OUT_OF_RANGE: Result := 'HPDF_PAGE_MODE_OUT_OF_RANGE';
+    HPDF_PAGE_NUM_STYLE_OUT_OF_RANGE: Result := 'HPDF_PAGE_NUM_STYLE_OUT_OF_RANGE';
+    HPDF_ANNOT_INVALID_ICON: Result := 'HPDF_ANNOT_INVALID_ICON';
+    HPDF_ANNOT_INVALID_BORDER_STYLE: Result := 'HPDF_ANNOT_INVALID_BORDER_STYLE';
+    HPDF_PAGE_INVALID_DIRECTION: Result := 'HPDF_PAGE_INVALID_DIRECTION';
+    HPDF_INVALID_FONT: Result := 'HPDF_INVALID_FONT';
+    HPDF_PAGE_INSUFFICIENT_SPACE: Result := 'HPDF_PAGE_INSUFFICIENT_SPACE';
+    HPDF_PAGE_INVALID_DISPLAY_TIME: Result := 'HPDF_PAGE_INVALID_DISPLAY_TIME';
+    HPDF_PAGE_INVALID_TRANSITION_TIME: Result := 'HPDF_PAGE_INVALID_TRANSITION_TIME';
+    HPDF_INVALID_PAGE_SLIDESHOW_TYPE: Result := 'HPDF_INVALID_PAGE_SLIDESHOW_TYPE';
+    HPDF_EXT_GSTATE_OUT_OF_RANGE: Result := 'HPDF_EXT_GSTATE_OUT_OF_RANGE';
+    HPDF_INVALID_EXT_GSTATE: Result := 'HPDF_INVALID_EXT_GSTATE';
+    HPDF_EXT_GSTATE_READ_ONLY: Result := 'HPDF_EXT_GSTATE_READ_ONLY';
+    HPDF_INVALID_U3D_DATA: Result := 'HPDF_INVALID_U3D_DATA';
+    HPDF_NAME_CANNOT_GET_NAMES: Result := 'HPDF_NAME_CANNOT_GET_NAMES';
+    HPDF_INVALID_ICC_COMPONENT_NUM: Result := 'HPDF_INVALID_ICC_COMPONENT_NUM';
+    HPDF_TOO_SMALL_PDF_VERSION: Result := 'HPDF_TOO_SMALL_PDF_VERSION';
+    HPDF_CONVERTER_NOT_FOUND: Result := 'HPDF_CONVERTER_NOT_FOUND';
+    HPDF_NOT_UTF_ENCODING: Result := 'HPDF_NOT_UTF_ENCODING';
+    HPDF_FAILD_TO_NEW_CONVERTER: Result := 'HPDF_FAILD_TO_NEW_CONVERTER';
+    HPDF_UNMATCHED_RELIEF_FONT: Result := 'HPDF_UNMATCHED_RELIEF_FONT';
+    HPDF_LOOPED_RELIEF_FONT: Result := 'HPDF_LOOPED_RELIEF_FONT';
+  else
+    Result := 'HPDF_OTHER_ERROR';
+  end;
+end;
+
+end.
+
