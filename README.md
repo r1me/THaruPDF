@@ -1,5 +1,5 @@
 # THaruPDF
-[![Click here to lend your support to r1me and make a donation at pledgie.com !](https://pledgie.com/campaigns/34292.png)](https://pledgie.com/campaigns/34292)
+[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SSCM9JJLXA8UC)
 
 THaruPDF is a Object Pascal binding for [libharu](http://libharu.org/) - free, open source library for generating PDF files.
 
